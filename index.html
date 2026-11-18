@@ -1,7 +1,7 @@
-<center><canvas id=canvas width=1200 height=1200></canvas>
-<script src=library.js></script>
-<script src=shape.js></script>
-<script src=webgl4.js></script>
+<center><canvas id="canvas" width="1200" height="1200" tabindex="0"></canvas>
+<script src="library.js"></script>
+<script src="shape.js"></script>
+<script src="webgl4.js"></script>
 <script>
 function Scene() {
 
@@ -72,10 +72,63 @@ function Scene() {
 
    let startTime = Date.now() / 1000, blinkTime = 0, m = new Matrix();
 
-   // DEFINE SHAPES THAT WE WILL USE IN THIS SCENE
+   // TRACK TYPED TEXT & LISTEN FOR KEYBOARD INPUT
+   let typedText = 'keziawidjaja is typing this text so that it resembles a cube please keep typing so we can get a full cube›';
+
+   const handleKeyDown = (e) => {
+      if (e.key === 'Backspace') {
+         typedText = typedText.slice(0, -1);
+         e.preventDefault();
+      } else if (e.key.length === 1) {
+         typedText += e.key;
+         if (e.key === ' ') e.preventDefault(); // Prevent spacebar from scrolling the page
+      }
+   };
+
+   window.addEventListener('keydown', handleKeyDown);
+   //canvas.focus();
+
+   let cubeText = (str, italicness, time) => {
+      
+      let unit = .1;
+      let cubeSize = .5;
+      let cols = Math.round(cubeSize / unit);
+      let rows = 5;
+      let side = cols * rows;
+      let numLayers = Math.max(1, Math.ceil(str.length / side));
+
+      let pos = i => {
+         let col = i % cols;
+         let row = Math.floor((i % side) / cols);
+         return [col * unit, row * unit];
+      };
+
+      m.push()
+         .move(0, 0, .5)
+         .turnY(time/4)
+
+      for (let i = 0; i < str.length; i++) {
+         let char = str[i];
+         let [col, row] = pos(i);
+         let layer = Math.floor(i / side);
+         let displacement = noise(Math.sin(time) * col, 0, layer) * .1;
+
+         let x = col - (cols - 1) * unit * .5;
+         let y = ((rows - 1) * unit * .5) - (row + displacement);
+         let depth = .1;
+         let z = ((numLayers - 1) * .5 - layer) * depth;
+         
+         m.push()
+         .move(x, y, z)
+         .scale(.03)
+         .draw(Shape.text(char, italicness), whitePlastic, 0)
+         .pop();
+      }
+      m.pop();
+   };
 
    let cube = Shape.cube();
-   let message = [ Shape.text(' !"#$%&\'()*+,-./'),
+   let message = [ Shape.text(' !"#$%./'),
                    Shape.text('0123456789:;<=>?'),
                    Shape.text('@ABCDEFGHIJKLMNO'),
                    Shape.text('PQRSTUVWXYZ[\\]^_'),
@@ -86,28 +139,23 @@ function Scene() {
       setUniform('1iv', 'uSampler', [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]);
       loadTexture(0, 'font.png');
       loadTexture(1, 'brick.png');
-   }
+   };
 
    // RENDER ONE ANIMATION FRAME
-
    this.update = () => {
       let time = Date.now() / 1000 - startTime;
       m.identity().perspective(10);
 
-      setUniform('1f', 'uSheer', 0);
-      m.push().move(0,0,-.4).turnY(time).turnX(time/2).scale(.3).draw(cube,whitePlastic,1).pop();
-
-      setUniform('1f', 'uSheer', .5);
-      for (let n = 0 ; n < message.length ; n++)
-         m.push().move(0,.4-.16*n,0).turnY(time/2).move(-.7,0,0).scale(.08).draw(message[n],redPlastic,0).pop();
+      setUniform('1f', 'uSheer', 1);
+      let italicness = 0;
+      cubeText(typedText, italicness, time);
 
       setUniform('1f', 'uSheer', 1);
       let xy = (100*cursor[0]>>0) + ',' + (100*cursor[1]>>0);
       m.push().move(-.9,.8,.5).scale(.03).draw(Shape.text('cursor = ' + xy),whitePlastic,0).pop();
-   }
+      
+    };
 }
 
 gl_start(canvas, new Scene());
 </script>
-
-
