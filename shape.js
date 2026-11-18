@@ -62,7 +62,25 @@ let Shape = {
       -1, 1,-1, 0,0,-1, 0,1,   1,-1,-1, 0,0,-1, 1,0,   1, 1,-1, 0,0,-1, 1,1,
    ]),
 
-   text : str => {
+   text : (str, italicness = 0) => {
+      let char = (c, i) => {
+         let u0 = ((c-32) % 12     ) / 12 + .007, u1 = u0 + 1 / 12 * .81; // 12 chars per row in the texture
+         let v0 = ((c-32) / 12 >> 0) /  8       , v1 = v0 + 1 /  8;
+         return [ i + italicness,1,0, 0,0,1, u0,v0,       // top left
+                  i+1,-1,0, 0,0,1, u1,v1,    // bottom right
+                  i  ,-1,0, 0,0,1, u0,v1,    // bottom left
+                  i + italicness,1,0, 0,0,1, u0,v0,       // top left
+                  i+1,-1,0, 0,0,1, u1,v1,    // bottom right
+                  i+1 + italicness, 1,0, 0,0,1, u1,v0     // top right
+               ];
+      }
+      let mesh = [];
+      for (let i = 0 ; i < str.length ; i++)
+         mesh.push(char(str.charCodeAt(i), i));
+      return new Float32Array(mesh.flat());
+   },
+
+   lineText : str => {
       let char = (c, i) => {
          let u0 = ((c-32) % 12     ) / 12 + .007, u1 = u0 + 1 / 12 * .81;
          let v0 = ((c-32) / 12 >> 0) /  8       , v1 = v0 + 1 /  8;
